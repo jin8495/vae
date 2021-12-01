@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import Module
 
 from src.vae import VAE
+from src.hook import Hook
 
 class IWAE(VAE):
     def __init__(self, input_dim, channels, num_z, num_samples):
@@ -10,7 +11,20 @@ class IWAE(VAE):
                                    channels=channels,
                                    num_z=num_z)
         self.num_samples = num_samples
-
+        
+        for num, layer in list(self.encoder._modules.items()):
+            layer.register_forward_hook(Hook("Encoder", False))
+            layer.register_backward_hook(Hook("Encoder", True))
+        for num, layer in list(self.z_mu._modules.items()):
+            layer.register_forward_hook(Hook("Mu", False))
+            layer.register_backward_hook(Hook("Mu", True))
+        for num, layer in list(self.z_logvar._modules.items()):
+            layer.register_forward_hook(Hook("Logvar", False))
+            layer.register_backward_hook(Hook("Logvar", True))
+        for num, layer in list(self.decoder._modules.items()):
+            layer.register_forward_hook(Hook("Decoder", False))
+            layer.register_backward_hook(Hook("Decoder", True))
+            
     def decode(self, z):
         B, _, _ = z.size()
         z = z.contiguous()
@@ -35,3 +49,5 @@ class IWAE(VAE):
         z = self.reparameterize(mu, logvar) #[B x S x D]
         recon_batch = self.decode(z)
         return recon_batch[:, 0, :]
+
+    
