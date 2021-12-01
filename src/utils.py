@@ -7,7 +7,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from tqdm.auto import tqdm
+from tqdm.notebook import tqdm
 
 ## Train related
 def train(epoch,
@@ -20,7 +20,7 @@ def train(epoch,
         data = data.to(device)
         optimizer.zero_grad()
         recon_batch, mu, logvar = model(data)
-        loss = criterion(recon_batch, data, mu, logvar)
+        loss = criterion(recon_batch, data, mu, logvar, len(data)/len(train_loader.dataset))
         train_loss += loss.item() / len(train_loader.dataset)
         loss.backward()
         optimizer.step()
@@ -58,7 +58,7 @@ def test(epoch,
             data = data.to(device)
             recon_batch, mu, logvar = model(data)
             
-            elbo_loss = criterion(recon_batch, data, mu, logvar)
+            elbo_loss = criterion(recon_batch, data, mu, logvar, 0)
             test_elbo_loss += elbo_loss.item() / len(test_loader.dataset)
             
             # an exception for iwae
